@@ -3,6 +3,7 @@
 
 #include "SExplosiveBarrel.h"
 
+#include "SAttributeComponent.h"
 #include "Math/UnitConversion.h"
 #include "PhysicsEngine/RadialForceComponent.h"
 
@@ -50,5 +51,22 @@ void ASExplosiveBarrel::OnActorHit(UPrimitiveComponent* HitComponent,
 	const FHitResult& Hit)
 {
 	ForceComp->FireImpulse();
+
+	if (OtherComp)
+	{
+		USAttributeComponent* AttributeComp =
+			Cast<USAttributeComponent>(OtherActor->GetComponentByClass(USAttributeComponent::StaticClass()));
+		if (AttributeComp)
+		{
+			AttributeComp->ApplyHealthChange(-50.0f);
+		}
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("OnActorHit in Explosive Barrel"));
+	
+	UE_LOG(LogTemp, Warning, TEXT("OtherActor: %s, at game time %f"), *GetNameSafe(OtherActor), GetWorld()->TimeSeconds);
+
+	FString CombinedString = FString::Printf(TEXT("Hit at location: %s"), *Hit.ImpactPoint.ToString());
+	DrawDebugString(GetWorld(), Hit.ImpactPoint, CombinedString, nullptr, FColor::Green, 2.0f, true);
 }
 

@@ -14,7 +14,15 @@ class ACTIONROGUELIKE_API ASMagicProjectile : public AActor
 {
 	GENERATED_BODY()
 	
-public:	
+public:
+	UFUNCTION()
+	void OnActorOverlap(UPrimitiveComponent* OverlappedComponent,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex,
+		bool bBFromSweep,
+		const FHitResult& SweepResult);
+	
 	// Sets default values for this actor's properties
 	ASMagicProjectile();
 
