@@ -43,9 +43,6 @@ protected:
 	
 	FTimerHandle TimerHandle_PrimaryAttack;
 
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
 	void MoveForward(float Value);
 	void MoveRight(float Value);
 	
@@ -54,9 +51,5 @@ protected:
 	void PrimaryInteract();
 
 public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
 };

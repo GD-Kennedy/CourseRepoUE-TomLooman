@@ -44,7 +44,7 @@ void ASMagicProjectile::Tick(float DeltaTime)
 void ASMagicProjectile::OnActorOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bBFromSweep, const FHitResult& SweepResult)
 {
-	if (OtherActor)
+	if (OtherActor && OtherActor != GetInstigator())
 	{
 		USAttributeComponent* AttributeComp =
 			Cast<USAttributeComponent>(OtherActor->GetComponentByClass(USAttributeComponent::StaticClass()));
