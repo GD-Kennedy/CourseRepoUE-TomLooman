@@ -3,44 +3,27 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+#include "SBasicProjectile.h"
 #include "SMagicProjectile.generated.h"
 
 class UProjectileMovementComponent;
 class USphereComponent;
  
 UCLASS()
-class ACTIONROGUELIKE_API ASMagicProjectile : public AActor
+class ACTIONROGUELIKE_API ASMagicProjectile : public ASBasicProjectile
 {
 	GENERATED_BODY()
-	
-public:
-	UFUNCTION()
-	void OnActorOverlap(UPrimitiveComponent* OverlappedComponent,
-		AActor* OtherActor,
-		UPrimitiveComponent* OtherComp,
-		int32 OtherBodyIndex,
-		bool bBFromSweep,
-		const FHitResult& SweepResult);
-	
-	// Sets default values for this actor's properties
-	ASMagicProjectile();
-
-protected:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	USphereComponent* SphereComp;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	UProjectileMovementComponent* MovementComp;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	UParticleSystemComponent* EffectComp;
-	
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
 
 public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+	// Sets default values for this actor's properties
+	ASMagicProjectile();
+	
+protected:
+	UPROPERTY(EditDefaultsOnly, Category = "Damage")
+	float DamageAmount;
+	
+	UFUNCTION()
+	void OnActorOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
+	virtual void PostInitializeComponents() override;
 };

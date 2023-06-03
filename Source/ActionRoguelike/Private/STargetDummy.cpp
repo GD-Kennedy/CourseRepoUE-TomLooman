@@ -11,14 +11,14 @@ ASTargetDummy::ASTargetDummy()
 	PrimaryActorTick.bCanEverTick = true;
 	MeshComp = CreateDefaultSubobject<UStaticMeshComponent>("StaticMesh");
 	RootComponent = MeshComp;
-	
+
 	AttributeComp = CreateDefaultSubobject<USAttributeComponent>("AttributeComp");
 
 	AttributeComp->OnHealthChanged.AddDynamic(this, &ASTargetDummy::OnHealthChange);
 }
 
 void ASTargetDummy::OnHealthChange(AActor* InstigatorActor, USAttributeComponent* OwningComp, float NewHealth,
-	float Delta)
+                                   float Delta)
 {
 	if (Delta < 0)
 	{

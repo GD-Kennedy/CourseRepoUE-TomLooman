@@ -12,27 +12,27 @@ ASExplosiveBarrel::ASExplosiveBarrel()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-    MeshComp = CreateDefaultSubobject<UStaticMeshComponent>("MeshComp");
+	MeshComp = CreateDefaultSubobject<UStaticMeshComponent>("MeshComp");
 	MeshComp->SetSimulatePhysics(true);
-	MeshComp->SetCollisionProfileName(UCollisionProfile::PhysicsActor_ProfileName); 
+	MeshComp->SetCollisionProfileName(UCollisionProfile::PhysicsActor_ProfileName);
 	RootComponent = MeshComp;
 
-    ForceComp = CreateDefaultSubobject<URadialForceComponent>("ForceComp");
+	ForceComp = CreateDefaultSubobject<URadialForceComponent>("ForceComp");
 	ForceComp->SetupAttachment(MeshComp);
 	ForceComp->SetAutoActivate(false);
-	
+
 	ForceComp->ImpulseStrength = 1000.0f;
 	ForceComp->bImpulseVelChange = true;
 	ForceComp->Radius = 500.0f;
-	
-	MeshComp->OnComponentHit.AddDynamic(this, &ASExplosiveBarrel::OnActorHit);	
+
+	MeshComp->OnComponentHit.AddDynamic(this, &ASExplosiveBarrel::OnActorHit);
 }
 
 void ASExplosiveBarrel::OnActorHit(UPrimitiveComponent* HitComponent,
-	AActor* OtherActor,
-	UPrimitiveComponent* OtherComp,
-	FVector NormalImpulse,
-	const FHitResult& Hit)
+                                   AActor* OtherActor,
+                                   UPrimitiveComponent* OtherComp,
+                                   FVector NormalImpulse,
+                                   const FHitResult& Hit)
 {
 	ForceComp->FireImpulse();
 
@@ -47,10 +47,10 @@ void ASExplosiveBarrel::OnActorHit(UPrimitiveComponent* HitComponent,
 	}
 
 	UE_LOG(LogTemp, Log, TEXT("OnActorHit in Explosive Barrel"));
-	
-	UE_LOG(LogTemp, Warning, TEXT("OtherActor: %s, at game time %f"), *GetNameSafe(OtherActor), GetWorld()->TimeSeconds);
+
+	UE_LOG(LogTemp, Warning, TEXT("OtherActor: %s, at game time %f"), *GetNameSafe(OtherActor),
+	       GetWorld()->TimeSeconds);
 
 	FString CombinedString = FString::Printf(TEXT("Hit at location: %s"), *Hit.ImpactPoint.ToString());
 	DrawDebugString(GetWorld(), Hit.ImpactPoint, CombinedString, nullptr, FColor::Green, 2.0f, true);
 }
-

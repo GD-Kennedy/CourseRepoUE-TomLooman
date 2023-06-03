@@ -20,12 +20,12 @@ void USInteractionComponent::BeginPlay()
 	Super::BeginPlay();
 
 	// ...
-	
 }
 
 
 // Called every frame
-void USInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void USInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType,
+                                           FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
@@ -38,7 +38,7 @@ void USInteractionComponent::PrimaryInteract()
 	TArray<FHitResult> Hits;
 	FVector EyeLocation;
 	FRotator EyeRotation;
-	
+
 	AActor* MyOwner = GetOwner();
 	MyOwner->GetActorEyesViewPoint(EyeLocation, EyeRotation);
 
@@ -51,24 +51,24 @@ void USInteractionComponent::PrimaryInteract()
 	Shape.SetSphere(Radius);
 
 	GetWorld()->SweepMultiByObjectType(Hits, EyeLocation, End, FQuat::Identity, ObjectQueryParams, Shape);
-	
+
 	FColor DebugColor = FColor::Red;
 	for (FHitResult Hit : Hits)
 	{
 		if (AActor* HitActor = Hit.GetActor())
 		{
 			if (HitActor->Implements<USGameplayInterface>())
-			{
-				APawn* MyPawn = Cast<APawn>(MyOwner);
-				ISGameplayInterface::Execute_Interact(HitActor, MyPawn);
+				if (HitActor->Implements<USGameplayInterface>())
+				{
+					APawn* MyPawn = Cast<APawn>(MyOwner);
+					ISGameplayInterface::Execute_Interact(HitActor, MyPawn);
 
-				DebugColor = FColor::Green;
-				DrawDebugSphere(GetWorld(), Hit.ImpactPoint, Radius, 32, DebugColor, false, 1.0f);
-				break;
-			}
-		}		
+					DebugColor = FColor::Green;
+					DrawDebugSphere(GetWorld(), Hit.ImpactPoint, Radius, 32, DebugColor, false, 1.0f);
+					break;
+				}
+		}
 	}
-	
+
 	DrawDebugLine(GetWorld(), EyeLocation, End, DebugColor, false, 1.0f, 0, 1.0f);
 }
-

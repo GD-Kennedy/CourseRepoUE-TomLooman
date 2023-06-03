@@ -27,6 +27,12 @@ protected:
 	TSubclassOf<AActor> ProjectileClass;
 
 	UPROPERTY(EditAnywhere, Category = "Attack")
+	TSubclassOf<AActor> ProjectileBPClass;
+	
+	UPROPERTY(EditAnywhere, Category = "Attack")
+	TSubclassOf<AActor> DashClass;
+	
+	UPROPERTY(EditAnywhere, Category = "Attack")
 	UAnimMontage* AttackAnim;
 	
 	UPROPERTY(VisibleAnywhere)
@@ -45,11 +51,26 @@ protected:
 
 	void MoveForward(float Value);
 	void MoveRight(float Value);
-	
-	void PrimaryAttack();
-	void PrimaryAttack_TimeElapsed();
-	void PrimaryInteract();
 
-public:	
+	void PrimaryAttack();
+	void StartProjectileTimer(TSubclassOf<AActor> projectile, float delay);
+	void PrimaryAttack_TimeElapsed();
+	void SpecialAttack();
+	void SpecialAttack_TimeElapsed();
+	void SpawnProjectile(TSubclassOf<AActor> projectileType);
+
+	void PrimaryInteract();
+	void Dash();
+	void Dash_TimeElapsed();
+
+	UFUNCTION()
+	void OnHealthChange(AActor* InstigatorActor, USAttributeComponent* OwningComp, float NewHealth, float Delta);
+
+	virtual void PostInitializeComponents() override;
+
+public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	UFUNCTION()
+	void PlayerTeleport(FVector position, FRotator rotation);
 };
