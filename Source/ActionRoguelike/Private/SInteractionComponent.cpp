@@ -3,6 +3,7 @@
 
 #include "SInteractionComponent.h"
 #include "SGameplayInterface.h"
+#include "Camera/CameraComponent.h"
 
 // Sets default values for this component's properties
 USInteractionComponent::USInteractionComponent()
@@ -33,7 +34,7 @@ void USInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 }
 
 
-void USInteractionComponent::PrimaryInteract()
+void USInteractionComponent::PrimaryInteract(UCameraComponent* camera)
 {
 	TArray<FHitResult> Hits;
 	FVector EyeLocation;
@@ -41,16 +42,18 @@ void USInteractionComponent::PrimaryInteract()
 
 	AActor* MyOwner = GetOwner();
 	MyOwner->GetActorEyesViewPoint(EyeLocation, EyeRotation);
-
-	FVector End = EyeLocation + (EyeRotation.Vector() * 500);
+	
+	FVector TraceStart = camera->GetComponentLocation();
+	FRotator TraceRotation = camera->GetComponentRotation();
+	FVector TraceEnd = TraceStart + (TraceRotation.Vector() * 500);
 
 	FCollisionObjectQueryParams ObjectQueryParams;
 	ObjectQueryParams.AddObjectTypesToQuery(ECC_WorldDynamic);
 	FCollisionShape Shape;
 	float Radius = 50.f;
 	Shape.SetSphere(Radius);
-
-	GetWorld()->SweepMultiByObjectType(Hits, EyeLocation, End, FQuat::Identity, ObjectQueryParams, Shape);
+	
+	GetWorld()->SweepMultiByObjectType(Hits, EyeLocation, TraceEnd, FQuat::Identity, ObjectQueryParams, Shape);
 
 	FColor DebugColor = FColor::Red;
 	for (FHitResult Hit : Hits)
@@ -70,5 +73,5 @@ void USInteractionComponent::PrimaryInteract()
 		}
 	}
 
-	DrawDebugLine(GetWorld(), EyeLocation, End, DebugColor, false, 1.0f, 0, 1.0f);
+	DrawDebugLine(GetWorld(), EyeLocation, TraceEnd, DebugColor, false, 1.0f, 0, 1.0f);
 }

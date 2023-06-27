@@ -3,6 +3,8 @@
 
 #include "SAttributeComponent.h"
 
+#include "Kismet/GameplayStatics.h"
+
 // Sets default values for this component's properties
 USAttributeComponent::USAttributeComponent()
 {
@@ -13,6 +15,11 @@ USAttributeComponent::USAttributeComponent()
 bool USAttributeComponent::IsAlive() const
 {
 	return Health > 0.0f;
+}
+
+bool USAttributeComponent::IsMaxHealth() const
+{
+	return Health >= MaxHealth;
 }
 
 bool USAttributeComponent::ApplyHealthChange(float Delta)

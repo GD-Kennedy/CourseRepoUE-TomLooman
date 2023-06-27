@@ -16,7 +16,7 @@ public:
 	// Sets default values for this actor's properties
 	ASItemChest();
 
-	void Interact_Implementation(APawn* InstigatorPawn);
+	virtual void Interact_Implementation(APawn* InstigatorPawn) override;
 
 	UPROPERTY(VisibleAnywhere)
 	float TargetPitch;

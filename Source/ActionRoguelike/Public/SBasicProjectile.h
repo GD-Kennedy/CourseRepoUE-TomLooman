@@ -19,10 +19,18 @@ public:
 	// Sets default values for this actor's properties
 	ASBasicProjectile();
 
+	UParticleSystem* GetCastVFX()
+	{
+		return CastVFX;
+	}
+
 protected:
 	UPROPERTY(EditAnywhere, Category = "Components")
 	UParticleSystem* ImpactVFX;
 
+	UPROPERTY(EditAnywhere, Category = "Components")
+	UParticleSystem* CastVFX;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	USphereComponent* SphereComp;
 
@@ -40,6 +48,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Audio")
 	USoundBase* ImpactSound;
+		
+	UPROPERTY(EditAnywhere, Category = "Components")
+	TSubclassOf<UCameraShakeBase> CameraShakeComponent;
 	
 	UFUNCTION()
 	virtual void OnActorHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);

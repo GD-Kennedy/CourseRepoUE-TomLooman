@@ -3,10 +3,12 @@
 #include "SCharacter.h"
 
 #include "SAttributeComponent.h"
+#include "SBasicProjectile.h"
 #include "SInteractionComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 
 // Sets default values
@@ -49,8 +51,8 @@ void ASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 
 	PlayerInputComponent->BindAction("PrimaryAttack", IE_Pressed, this, &ASCharacter::PrimaryAttack);
 	PlayerInputComponent->BindAction("SpecialAttack", IE_Pressed, this, &ASCharacter::SpecialAttack);
+	
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ASCharacter::Jump);
-
 	PlayerInputComponent->BindAction("Dash", IE_Pressed, this, &ASCharacter::Dash);
 
 	PlayerInputComponent->BindAction("PrimaryInteract", IE_Pressed, this, &ASCharacter::PrimaryInteract);
@@ -87,24 +89,25 @@ void ASCharacter::MoveRight(float Value)
 
 void ASCharacter::PrimaryAttack()
 {
-	PlayAnimMontage(AttackAnim);	
-	StartProjectileTimer(ProjectileClass, 0.2f);
+	PlayAnimMontage(AttackAnim);
+	StartProjectileAction(ProjectileClass, 0.2f);
 }
 
 void ASCharacter::SpecialAttack()
 {
-	PlayAnimMontage(AttackAnim);	
-	StartProjectileTimer(ProjectileBPClass, 0.2f);
+	PlayAnimMontage(AttackAnim);
+	StartProjectileAction(ProjectileBPClass, 0.2f);
 }
 
 void ASCharacter::Dash()
 {
 	PlayAnimMontage(AttackAnim, 2);
-	StartProjectileTimer(DashClass, 0.1f);
+	StartProjectileAction(DashClass, 0.1f);
 }
 
-void ASCharacter::StartProjectileTimer(TSubclassOf<AActor> projectile, float delay)
+void ASCharacter::StartProjectileAction(TSubclassOf<AActor> projectile, float delay)
 {
+	UGameplayStatics::SpawnEmitterAttached(CastingVFX, GetMesh(), HandSocketName);	
 	GetWorld()->GetTimerManager().SetTimer(TimerHandle_PrimaryAttack,
 		[&, projectile] { SpawnProjectile(projectile); },
 		delay,
@@ -135,7 +138,8 @@ void ASCharacter::SpawnProjectile(TSubclassOf<AActor> projectileType)
 		{
 			TraceEnd = Hit.ImpactPoint;
 		}
-		FVector HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");
+		
+		FVector HandLocation = GetMesh()->GetSocketLocation(HandSocketName);
 
 		DrawDebugLine(GetWorld(), HandLocation, TraceEnd, FColor::Emerald, false, 1, 0, 2);
 
@@ -153,16 +157,25 @@ void ASCharacter::PrimaryInteract()
 {
 	if (InteractionComp)
 	{
-		InteractionComp->PrimaryInteract();
+		InteractionComp->PrimaryInteract(CameraComponent);
 	}
 }
 
 void ASCharacter::OnHealthChange(AActor* InstigatorActor, USAttributeComponent* OwningComp, float NewHealth,
 	float Delta)
 {
-	if (NewHealth <= 0.0f && Delta != 0.0f)
+	if (NewHealth <= 0.0f)
 	{
-		APlayerController* PC = Cast<APlayerController>(GetController());
-		DisableInput(PC);
+		if(Delta != 0.0f)
+		{
+			APlayerController* PC = Cast<APlayerController>(GetController());
+			DisableInput(PC);
+		}
+	}
+	else if (Delta < 0)
+	{
+		GetMesh()->SetScalarParameterValueOnMaterials(FlashTimeToHitParam, GetWorld()->TimeSeconds);
+		GetMesh()->SetScalarParameterValueOnMaterials(HitFlashSpeedParam, HitFlashSpeedValue);
+		GetMesh()->SetVectorParameterValueOnMaterials(HitFlashColorParam, HitFlashColorValue);
 	}
 }

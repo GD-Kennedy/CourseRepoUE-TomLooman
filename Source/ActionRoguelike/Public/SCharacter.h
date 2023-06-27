@@ -22,6 +22,26 @@ public:
 	ASCharacter();
 
 protected:
+	UPROPERTY(EditAnywhere, Category = "Effects")
+	FName HandSocketName = "Muzzle_01";
+	
+	UPROPERTY(VisibleAnywhere, Category = "On hit params")
+	FName FlashTimeToHitParam = "HitFlashTime";
+
+	UPROPERTY(EditAnywhere, Category = "On hit params")
+	FName HitFlashSpeedParam = "HitFlashSpeed";
+	
+	UPROPERTY(EditAnywhere, Category = "On hit params")
+	float HitFlashSpeedValue = 1.0f;
+
+	UPROPERTY(EditAnywhere, Category = "On hit params")
+	FName HitFlashColorParam = "HitFlashColor";
+	
+	UPROPERTY(EditAnywhere, Category = "On hit params")
+	FVector4 HitFlashColorValue;
+	
+	UPROPERTY(EditAnywhere, Category = "Effects")
+	UParticleSystem* CastingVFX;
 	
 	UPROPERTY(EditAnywhere, Category = "Attack")
 	TSubclassOf<AActor> ProjectileClass;
@@ -53,7 +73,7 @@ protected:
 	void MoveRight(float Value);
 
 	void PrimaryAttack();
-	void StartProjectileTimer(TSubclassOf<AActor> projectile, float delay);
+	void StartProjectileAction(TSubclassOf<AActor> projectile, float delay);
 	void PrimaryAttack_TimeElapsed();
 	void SpecialAttack();
 	void SpecialAttack_TimeElapsed();
@@ -70,6 +90,10 @@ protected:
 
 public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	UCameraComponent* GetCamera()
+	{
+		return CameraComponent;
+	}
 
 	UFUNCTION()
 	void PlayerTeleport(FVector position, FRotator rotation);

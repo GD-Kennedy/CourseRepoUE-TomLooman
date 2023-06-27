@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Camera/CameraComponent.h"
 #include "SInteractionComponent.generated.h"
 
 
@@ -16,7 +17,7 @@ public:
 	// Sets default values for this component's properties
 	USInteractionComponent();
 
-	void PrimaryInteract();
+	void PrimaryInteract(UCameraComponent* camera);
 
 protected:
 	// Called when the game starts

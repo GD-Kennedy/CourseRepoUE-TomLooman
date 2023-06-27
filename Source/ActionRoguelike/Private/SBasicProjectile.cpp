@@ -3,6 +3,7 @@
 
 #include "SBasicProjectile.h"
 
+#include "SCharacter.h"
 #include "Components/AudioComponent.h"
 #include "Components/SphereComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
@@ -27,7 +28,7 @@ ASBasicProjectile::ASBasicProjectile()
 	
 	AudioComp = CreateDefaultSubobject<UAudioComponent>("AudioComp");
 	AudioComp->SetupAttachment(SphereComp);
-
+	
 	MovementComp = CreateDefaultSubobject<UProjectileMovementComponent>("ProjectileMovementCmomp");
 	MovementComp->InitialSpeed = 8000.0f;
 	MovementComp->bRotationFollowsVelocity = true;
@@ -43,8 +44,16 @@ void ASBasicProjectile::Explode_Implementation()
 		FRotator rotation = GetActorRotation();
 		UGameplayStatics::SpawnEmitterAtLocation(this, ImpactVFX, location, rotation);
 		UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, location, rotation);
+		
 		AudioComp->FadeOut(0.1f, 0.0f);
+		
+		if (CameraShakeComponent)
+		{
+			UGameplayStatics::PlayWorldCameraShake(this, CameraShakeComponent, GetActorLocation(), 100.0f, 500.0f);
+		}
+		
 		Destroy();
+
 	}
 }
 
