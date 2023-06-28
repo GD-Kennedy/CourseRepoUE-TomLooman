@@ -10,4 +10,7 @@ UCLASS()
 class ACTIONROGUELIKE_API ASHealthPotion : public ASBasicPickup
 {
 	GENERATED_BODY()
+	
+public:
+	virtual void Interact_Implementation(APawn* InstigatorPawn) override;
 };

@@ -90,13 +90,13 @@ void ASCharacter::MoveRight(float Value)
 void ASCharacter::PrimaryAttack()
 {
 	PlayAnimMontage(AttackAnim);
-	StartProjectileAction(ProjectileClass, 0.2f);
+	StartProjectileAction(ProjectileClass, 0.15f);
 }
 
 void ASCharacter::SpecialAttack()
 {
 	PlayAnimMontage(AttackAnim);
-	StartProjectileAction(ProjectileBPClass, 0.2f);
+	StartProjectileAction(ProjectileBPClass, 0.15f);
 }
 
 void ASCharacter::Dash()
@@ -107,7 +107,12 @@ void ASCharacter::Dash()
 
 void ASCharacter::StartProjectileAction(TSubclassOf<AActor> projectile, float delay)
 {
-	UGameplayStatics::SpawnEmitterAttached(CastingVFX, GetMesh(), HandSocketName);	
+	if (CastingVFX)
+	{
+		UGameplayStatics::SpawnEmitterAttached(CastingVFX, GetMesh(), HandSocketName,
+			FVector::Zero(), FRotator::ZeroRotator,
+			EAttachLocation::SnapToTarget);	
+	}
 	GetWorld()->GetTimerManager().SetTimer(TimerHandle_PrimaryAttack,
 		[&, projectile] { SpawnProjectile(projectile); },
 		delay,

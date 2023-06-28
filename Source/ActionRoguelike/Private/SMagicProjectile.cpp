@@ -12,7 +12,7 @@ ASMagicProjectile::ASMagicProjectile()
 {
 	SphereComp->SetSphereRadius(20.0f);
 	InitialLifeSpan = 10.0f;
-	DamageAmount = 20.0f;
+	DamageAmount = 10.0f;
 }
 
 void ASMagicProjectile::OnActorOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
@@ -26,7 +26,7 @@ void ASMagicProjectile::OnActorOverlap(UPrimitiveComponent* OverlappedComponent,
 
 		if (AttributeComp)
 		{
-			AttributeComp->ApplyHealthChange(-20.0f);
+			AttributeComp->ApplyHealthChange(-DamageAmount);
 
 			Explode_Implementation();
 		}

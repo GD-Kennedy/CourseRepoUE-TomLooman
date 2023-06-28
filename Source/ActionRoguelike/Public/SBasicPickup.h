@@ -13,7 +13,7 @@ class ACTIONROGUELIKE_API ASBasicPickup : public AActor, public ISGameplayInterf
 
 public:
 	ASBasicPickup();
-
+	
 	virtual void Interact_Implementation(APawn* InstigatorPawn) override;
 
 	UPROPERTY(VisibleAnywhere)
