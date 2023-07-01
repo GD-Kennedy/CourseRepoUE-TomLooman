@@ -6,17 +6,16 @@
 
 void ASHealthPotion::Interact_Implementation(APawn* InstigatorPawn)
 {
-	if (ASCharacter* character = Cast<ASCharacter>(InstigatorPawn))
+	if (ASCharacter* Character = Cast<ASCharacter>(InstigatorPawn))
 	{
-		if (USAttributeComponent* attributeComp = Cast<USAttributeComponent>(
-			character->GetComponentByClass(USAttributeComponent::StaticClass())))
+		if (USAttributeComponent* attributeComp = USAttributeComponent::GetAttributes(Character))
 		{
 			if (attributeComp->IsMaxHealth())
 			{
 				return;
 			}
 			Super::Interact_Implementation(InstigatorPawn);
-			attributeComp->ApplyHealthChange(50.0f);
+			attributeComp->ApplyHealthChange(this, 50.0f);
 		}
 	}
 }

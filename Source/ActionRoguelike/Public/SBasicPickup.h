@@ -22,7 +22,4 @@ public:
 protected:
 	UPROPERTY(EditAnywhere)
 	FTimerHandle TimerHandle_Cooldown;
-	
-protected:
-	virtual void BeginPlay() override;
 };

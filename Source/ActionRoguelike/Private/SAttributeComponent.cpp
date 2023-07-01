@@ -22,7 +22,7 @@ bool USAttributeComponent::IsMaxHealth() const
 	return Health >= MaxHealth;
 }
 
-bool USAttributeComponent::ApplyHealthChange(float Delta)
+bool USAttributeComponent::ApplyHealthChange(AActor* InstigatorActor, float Delta)
 {	
 	if (Health < Delta)
 	{
@@ -31,6 +31,27 @@ bool USAttributeComponent::ApplyHealthChange(float Delta)
 	Health += Delta;
 	Health = FMath::Clamp<float>(Health, 0.0f, MaxHealth);
 	
-	OnHealthChanged.Broadcast(nullptr, this, Health, Delta);
+	OnHealthChanged.Broadcast(InstigatorActor, this, Health, Delta);
 	return true;
+}
+
+USAttributeComponent* USAttributeComponent::GetAttributes(AActor* FromActor)
+{
+	if (FromActor)
+	{
+		return Cast<USAttributeComponent>(
+			FromActor->GetComponentByClass(StaticClass()));
+	}
+	
+	return nullptr;
+}
+
+bool USAttributeComponent::IsActorAlive(AActor* Actor)
+{
+	if (USAttributeComponent* Ac = GetAttributes(Actor))
+	{
+		return Ac->IsAlive();
+	}
+	
+	return false;
 }

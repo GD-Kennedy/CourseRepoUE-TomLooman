@@ -15,18 +15,15 @@ ASMagicProjectile::ASMagicProjectile()
 	DamageAmount = 10.0f;
 }
 
-void ASMagicProjectile::OnActorOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-                                       UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep,
-                                       const FHitResult& SweepResult)
+void ASMagicProjectile::OnActorOverlap(UPrimitiveComponent*, AActor* OtherActor,
+                                       UPrimitiveComponent*, int32, bool,
+                                       const FHitResult&)
 {
 	if (OtherActor && OtherActor != GetInstigator())
 	{
-		USAttributeComponent* AttributeComp =
-			Cast<USAttributeComponent>(OtherActor->GetComponentByClass(USAttributeComponent::StaticClass()));
-
-		if (AttributeComp)
+		if (USAttributeComponent* AttributeComp = USAttributeComponent::GetAttributes(OtherActor))
 		{
-			AttributeComp->ApplyHealthChange(-DamageAmount);
+			AttributeComp->ApplyHealthChange(GetInstigator(), -DamageAmount);
 
 			Explode_Implementation();
 		}
