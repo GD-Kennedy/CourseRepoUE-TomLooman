@@ -12,7 +12,7 @@
 ASDashProjectile::ASDashProjectile()
 {
 	SphereComp->SetSphereRadius(30.0f);
-	MovementComp->InitialSpeed = 4500;
+	MoveComp->InitialSpeed = 4500;
 	LifeSpan = 1.0f;
 }
 
@@ -21,22 +21,17 @@ void ASDashProjectile::BeginPlay()
 {
 	Super::BeginPlay();
 
-	GetWorldTimerManager().SetTimer(TimerHandle_DashDelay, this, &ASDashProjectile::TriggerTeleport, 0.2f);
+	GetWorldTimerManager().SetTimer(TimerHandle_DashDelay, this, &ASDashProjectile::TriggerDelayedTeleport, 0.3f);
 }
 
 void ASDashProjectile::OnActorHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
                                   UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-	TriggerTeleport();
+	TriggerDelayedTeleport();
 }
 
-void ASDashProjectile::TriggerTeleport()
+void ASDashProjectile::TriggerDelayedTeleport()
 {
-	//// MOJ ORYGINALNY KOD
-	// FVector Position = SphereComp->GetComponentLocation();
-	// APawn* Player = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
-	// Player->TeleportTo(Position, Player->GetActorRotation());
-
 	APawn* Player = GetInstigator();
 	Player->TeleportTo(GetActorLocation(), Player->GetActorRotation());
 	Explode_Implementation();

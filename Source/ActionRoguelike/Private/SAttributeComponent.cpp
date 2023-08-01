@@ -3,13 +3,26 @@
 
 #include "SAttributeComponent.h"
 
-#include "Kismet/GameplayStatics.h"
+#include "SGameModeBase.h"
+#include "Net/UnrealNetwork.h"
+
+static TAutoConsoleVariable<float> CVarDamageMultiplier(
+	TEXT("su.DamageMultiplier"),
+	1.0f,
+	TEXT("Multiplies ALL damage numbers. Default 1.0."),
+	ECVF_Cheat);
 
 // Sets default values for this component's properties
 USAttributeComponent::USAttributeComponent()
 {
 	Health = 100;
 	MaxHealth = 100;
+
+	HasRage = false;
+	Rage = 100;
+	MaxRage = 100;
+
+	SetIsReplicatedByDefault(true);
 }
 
 bool USAttributeComponent::IsAlive() const
@@ -22,17 +35,66 @@ bool USAttributeComponent::IsMaxHealth() const
 	return Health >= MaxHealth;
 }
 
+bool USAttributeComponent::IsLowHealth() const
+{
+	return Health <= MaxHealth / 4;
+}
+
+bool USAttributeComponent::Kill(AActor* InstigatorActor)
+{
+	return ApplyHealthChange(InstigatorActor, -MaxHealth);
+}
+
 bool USAttributeComponent::ApplyHealthChange(AActor* InstigatorActor, float Delta)
-{	
-	if (Health < Delta)
+{
+	if (!GetOwner()->CanBeDamaged() && Delta < 0)
 	{
-		Delta = Health;
+		return false;
 	}
-	Health += Delta;
-	Health = FMath::Clamp<float>(Health, 0.0f, MaxHealth);
+
+	if (Delta < 0.0f)
+	{
+		Delta *= CVarDamageMultiplier.GetValueOnGameThread();
+	}
+
+	float PrevHealth = Health;
+	float NewHealth = FMath::Clamp<float>(Health + Delta, 0.0f, MaxHealth);
+
+	float ActualDelta = NewHealth - PrevHealth;
 	
-	OnHealthChanged.Broadcast(InstigatorActor, this, Health, Delta);
-	return true;
+	if (GetOwner()->HasAuthority())
+	{
+		Health = NewHealth;
+		
+		if (ActualDelta != 0)
+		{
+			// OnHealthChanged.Broadcast(InstigatorActor, this, Health, Delta);
+			MulticastHealthChanged(InstigatorActor, Health, Delta);
+		}
+
+		if (HasRage)
+		{
+			const auto GainedRage = abs(ActualDelta);
+			ApplyRageChange(InstigatorActor, GainedRage);
+		}
+
+		if (Health == 0) // Died
+		{
+			ASGameModeBase* GM = GetWorld()->GetAuthGameMode<ASGameModeBase>();
+			if (GM)
+			{
+				GM->OnActorKilled(GetOwner(), InstigatorActor);
+			}
+		}
+	}
+	
+	return ActualDelta != 0;
+}
+
+void USAttributeComponent::ApplyRageChange(AActor* InstigatorActor, float Delta)
+{
+	Rage = FMath::Clamp<float>(Rage + Delta, 0.0f, MaxRage);
+	OnRageChanged.Broadcast(InstigatorActor, this, Rage, Delta);
 }
 
 USAttributeComponent* USAttributeComponent::GetAttributes(AActor* FromActor)
@@ -54,4 +116,31 @@ bool USAttributeComponent::IsActorAlive(AActor* Actor)
 	}
 	
 	return false;
+}
+
+bool USAttributeComponent::IsActorLowHealth(AActor* Actor)
+{
+	if (USAttributeComponent* Ac = GetAttributes(Actor))
+	{
+		return Ac->IsLowHealth();
+	}
+
+	return false;
+}
+
+
+void USAttributeComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	
+	DOREPLIFETIME(USAttributeComponent, Health);
+	DOREPLIFETIME(USAttributeComponent, MaxHealth);
+
+	// DOREPLIFETIME_CONDITION(USAttributeComponent, MaxHealth, COND_OwnerOnly);	
+}
+
+void USAttributeComponent::MulticastHealthChanged_Implementation(AActor* Instigator, float NewHealth,
+	float Delta)
+{
+	OnHealthChanged.Broadcast(Instigator, this, NewHealth, Delta);
 }

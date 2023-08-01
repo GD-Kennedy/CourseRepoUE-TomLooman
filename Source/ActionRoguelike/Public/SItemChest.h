@@ -22,10 +22,17 @@ public:
 	float TargetPitch;
 
 protected:
+	UPROPERTY(ReplicatedUsing="OnRep_LidOpened", Replicated) // RepNotify
+	bool bLidOpen;
+
+	UFUNCTION()
+	void OnRep_LidOpened();
+	
 	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* BaseMesh;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UStaticMeshComponent* LidMesh;
 
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };

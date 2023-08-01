@@ -27,6 +27,6 @@ protected:
 	virtual void PostInitializeComponents() override;
 
 private:
-	void TriggerTeleport();
+	void TriggerDelayedTeleport();
 	virtual void BeginPlay() override;
 };

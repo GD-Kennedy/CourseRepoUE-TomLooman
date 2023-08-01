@@ -7,6 +7,7 @@
 #include "SAttributeComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnHealthChanged, AActor*, InstigatorActor, USAttributeComponent*, OwningComp, float, NewHealth, float, Delta);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnRageChanged, AActor*, InstigatorActor, USAttributeComponent*, OwningComp, float, NewRage, float, Delta);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class ACTIONROGUELIKE_API USAttributeComponent : public UActorComponent
@@ -19,27 +20,56 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category="Attributes", meta=(DisplayName = "isAlive"))
 	static bool IsActorAlive(AActor* Actor);
+
+	UFUNCTION(BlueprintCallable, Category="Attributes", meta=(DisplayName = "isLowHealth"))
+	static bool IsActorLowHealth(AActor* Actor);
 	
 public:	
 	USAttributeComponent();
 
 protected:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Replicated, Category = "Attributes")
 	float Health;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Replicated, Category = "Attributes")
 	float MaxHealth;
-	// HealthMax, Stamina, Strength
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes")
+	bool HasRage;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes")
+	float Rage;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes")
+	float MaxRage;
 
 public:
 	UFUNCTION(BlueprintCallable)
 	bool IsAlive() const;
 
+	UFUNCTION(BlueprintCallable)
 	bool IsMaxHealth() const;
+
+	UFUNCTION(BlueprintCallable)
+	bool IsLowHealth() const;
+	
+	UFUNCTION(BlueprintCallable)
+	bool Kill(AActor* InstigatorActor);
 	
 	UPROPERTY(BlueprintAssignable)
 	FOnHealthChanged OnHealthChanged;
 	
+	UPROPERTY(BlueprintAssignable)
+	FOnRageChanged OnRageChanged;
+	
 	UFUNCTION(BlueprintCallable, Category = "Attributes")
 	bool ApplyHealthChange(AActor* InstigatorActor, float Delta);
+
+	UFUNCTION(BlueprintCallable)
+	void ApplyRageChange(AActor* InstigatorActor, float Delta);
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	UFUNCTION(NetMulticast, Reliable) // TODO: Mark as Unreliable once we moved the 'state' to our character
+	void MulticastHealthChanged(AActor* Instigator, float NewHealth, float Delta);
 };

@@ -2,12 +2,11 @@
 
 
 #include "SMagicProjectile.h"
-#include "SAttributeComponent.h"
+#include "SGameplayFunctionLibrary.h"
 #include "Components/SphereComponent.h"
+#include "GameActionSystem/SActionComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
-#include "Particles/ParticleSystemComponent.h"
 
-// Sets default values
 ASMagicProjectile::ASMagicProjectile()
 {
 	SphereComp->SetSphereRadius(20.0f);
@@ -17,16 +16,32 @@ ASMagicProjectile::ASMagicProjectile()
 
 void ASMagicProjectile::OnActorOverlap(UPrimitiveComponent*, AActor* OtherActor,
                                        UPrimitiveComponent*, int32, bool,
-                                       const FHitResult&)
+                                       const FHitResult& HitResult)
 {
-	if (OtherActor && OtherActor != GetInstigator())
+	if (OtherActor && GetInstigator() != OtherActor)
 	{
-		if (USAttributeComponent* AttributeComp = USAttributeComponent::GetAttributes(OtherActor))
+		USActionComponent* ActionComp = Cast<USActionComponent>(OtherActor->GetComponentByClass(USActionComponent::StaticClass()));
+		if (ActionComp && !bIsBouncing && ActionComp->ActiveGameplayTags.HasTag(ParryTag))
 		{
-			AttributeComp->ApplyHealthChange(GetInstigator(), -DamageAmount);
+			bIsBouncing = true;
+			MoveComp->Velocity *= -1;
 
-			Explode_Implementation();
+			if (APawn* NewInstigator = Cast<APawn>(OtherActor))
+			{
+				SetInstigator(NewInstigator);
+			}
+			return;
 		}
+		
+		if (USGameplayFunctionLibrary::ApplyDirectionalDamage(GetInstigator(), OtherActor, DamageAmount, HitResult))
+		{
+			if (ActionComp && HasAuthority())
+			{
+				ActionComp->AddAction(GetInstigator(), BurningActionClass);
+			}
+			
+			Explode_Implementation();
+		};
 	}
 }
 

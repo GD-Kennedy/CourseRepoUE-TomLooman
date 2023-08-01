@@ -3,12 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "SBasicProjectile.h"
 #include "SMagicProjectile.generated.h"
 
-class UProjectileMovementComponent;
-class USphereComponent;
- 
+class USActionEffect;
+
 UCLASS()
 class ACTIONROGUELIKE_API ASMagicProjectile : public ASBasicProjectile
 {
@@ -21,6 +21,14 @@ public:
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Damage")
 	float DamageAmount;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Damage")
+	FGameplayTag ParryTag;
+	
+	int bIsBouncing;
+
+	UPROPERTY(EditDefaultsOnly, Category="Damage")
+	TSubclassOf<USActionEffect> BurningActionClass;
 	
 	UFUNCTION()
 	void OnActorOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);

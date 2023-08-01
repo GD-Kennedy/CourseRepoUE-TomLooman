@@ -3,11 +3,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "SWorldUserWidget.h"
+#include "GameActionSystem/SActionComponent.h"
 #include "GameFramework/Character.h"
-#include "Perception/PawnSensingComponent.h"
 #include "SAICharacter.generated.h"
 
 class USAttributeComponent;
+class UPawnSensingComponent;
+class SUserWidget;
+class USWorldUserWidget;
 
 UCLASS()
 class ACTIONROGUELIKE_API ASAICharacter : public ACharacter
@@ -18,11 +22,15 @@ public:
 	ASAICharacter();
 
 protected:
+
 	UPROPERTY(VisibleAnywhere, Category="Components")
 	UPawnSensingComponent* PawnSensingComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	USAttributeComponent* AttributeComp;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	USActionComponent* ActionComp;
 
 	UPROPERTY(VisibleAnywhere, Category = "On hit params")
 	FName FlashTimeToHitParam = "HitFlashTime";
@@ -39,13 +47,32 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "On hit params")
 	FVector4 HitFlashColorValue;
 
+	UPROPERTY(EditDefaultsOnly, Category="UI")
+	TSubclassOf<UUserWidget> HealthBarWidgetClass;
+	
+	UPROPERTY(EditDefaultsOnly, Category="UI")
+	TSubclassOf<UUserWidget> EnemyDetectedWidgetClass;
+
+	UPROPERTY()
+	USWorldUserWidget* ActiveHealthBar;
+	
+	UPROPERTY()
+	USWorldUserWidget* EnemyDetectedMark;
+
 	virtual void PostInitializeComponents() override;
 
-	void SetTargetActor(AActor* newTarget);
+	void SetTargetActor(AActor* NewTarget);
+	
+	void ShowEnemyDetectedWidget();
 
 	UFUNCTION()
 	void OnHealthChange(AActor* InstigatorActor, USAttributeComponent* OwningComp, float NewHealth, float Delta);
+	void HandleDeath(float Delta);
 
+	void HandleDamage(AActor* InstigatorActor);
+	void InitializeHealthBar();
+	void ToggleRagdollPhysics();
+	void FlashDamageOnHit();
 	UFUNCTION()
-	void OnPawnSeen(APawn* pawn);
+	void OnPawnSeen(APawn* Pawn);
 };

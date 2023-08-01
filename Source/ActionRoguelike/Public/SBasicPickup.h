@@ -11,6 +11,8 @@ class ACTIONROGUELIKE_API ASBasicPickup : public AActor, public ISGameplayInterf
 {
 	GENERATED_BODY()
 
+	
+	
 public:
 	ASBasicPickup();
 	
@@ -20,6 +22,9 @@ public:
 	UStaticMeshComponent* MeshComp;
 
 protected:
+	UPROPERTY(EditDefaultsOnly)
+	int32 PickupCost;
+	
 	UPROPERTY(EditAnywhere)
 	FTimerHandle TimerHandle_Cooldown;
 };

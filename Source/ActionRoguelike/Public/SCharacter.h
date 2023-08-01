@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "SPlayerState.h"
 #include "GameFramework/Character.h"
 #include "SCharacter.generated.h"
 
@@ -11,6 +12,7 @@ class UCameraComponent;
 class USpringArmComponent;
 class USInteractionComponent;
 class UAnimMontage;
+class USActionComponent;
 
 UCLASS()
 class ACTIONROGUELIKE_API ASCharacter : public ACharacter
@@ -21,10 +23,7 @@ public:
 	// Sets default values for this character's properties
 	ASCharacter();
 
-protected:
-	UPROPERTY(EditAnywhere, Category = "Effects")
-	FName HandSocketName = "Muzzle_01";
-	
+protected:		
 	UPROPERTY(VisibleAnywhere, Category = "On hit params")
 	FName FlashTimeToHitParam = "HitFlashTime";
 
@@ -40,61 +39,52 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "On hit params")
 	FVector4 HitFlashColorValue;
 	
-	UPROPERTY(EditAnywhere, Category = "Effects")
-	UParticleSystem* CastingVFX;
-	
-	UPROPERTY(EditAnywhere, Category = "Attack")
-	TSubclassOf<AActor> ProjectileClass;
-
-	UPROPERTY(EditAnywhere, Category = "Attack")
-	TSubclassOf<AActor> ProjectileBPClass;
-	
-	UPROPERTY(EditAnywhere, Category = "Attack")
-	TSubclassOf<AActor> DashClass;
-	
-	UPROPERTY(EditAnywhere, Category = "Attack")
-	UAnimMontage* AttackAnim;
-	
 	UPROPERTY(VisibleAnywhere)
-	USpringArmComponent* SpringArmComponent;
+	USpringArmComponent* SpringArmComp;
 
 	UPROPERTY(VisibleAnywhere)
-	UCameraComponent* CameraComponent;
+	UCameraComponent* CameraComp;
 
 	UPROPERTY(VisibleAnywhere)
 	USInteractionComponent* InteractionComp;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	USAttributeComponent* AttributeComp;
-	
-	FTimerHandle TimerHandle_PrimaryAttack;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	USActionComponent* ActionComp;
 
 	void MoveForward(float Value);
 	void MoveRight(float Value);
 
 	void PrimaryAttack();
-	void StartProjectileAction(TSubclassOf<AActor> projectile, float delay);
-	void PrimaryAttack_TimeElapsed();
 	void SpecialAttack();
-	void SpecialAttack_TimeElapsed();
-	void SpawnProjectile(TSubclassOf<AActor> projectileType);
 
 	void PrimaryInteract();
 	void Dash();
-	void Dash_TimeElapsed();
+	
+	void SprintStart();
+	void SprintStop();
 
 	UFUNCTION()
 	void OnHealthChange(AActor* InstigatorActor, USAttributeComponent* OwningComp, float NewHealth, float Delta);
 
+	UFUNCTION()
+	void OnRageChange(AActor* InstigatorActor, USAttributeComponent* OwningComp, float NewHealth, float Delta);
+	
 	virtual void PostInitializeComponents() override;
 
 public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-	UCameraComponent* GetCamera()
-	{
-		return CameraComponent;
-	}
-
+	
 	UFUNCTION()
-	void PlayerTeleport(FVector position, FRotator rotation);
+	void PlayerTeleport(FVector Position, FRotator Rotation);
+
+	UFUNCTION(Exec)
+	void HealSelf(float Amount = 100);
+	
+	virtual FVector GetPawnViewLocation() const override;
+	virtual FRotator GetPawnViewRotation() const;
+	UCameraComponent* GetCamera() const;
+	USActionComponent* GetActionComponent() const;
 };

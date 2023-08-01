@@ -35,7 +35,7 @@ protected:
 	USphereComponent* SphereComp;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	UProjectileMovementComponent* MovementComp;
+	UProjectileMovementComponent* MoveComp;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UParticleSystemComponent* EffectComp;

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "SBasicPickup.h"
 #include "EnvironmentQuery/EnvQueryInstanceBlueprintWrapper.h"
 #include "GameFramework/GameModeBase.h"
 #include "SGameModeBase.generated.h"
@@ -20,6 +21,9 @@ public:
 		
 	virtual void StartPlay() override;
 
+	UFUNCTION()
+	virtual void OnActorKilled(AActor* KilledActor, AActor* Killer);
+
 protected:
 	FTimerHandle TimerHandle_SpawnBots;
 
@@ -35,9 +39,30 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="AI")
 	UClass* MinionClass;
 
+	UPROPERTY(EditDefaultsOnly, Category="AI")
+	float RespawnDelay;
+
+	UPROPERTY(EditDefaultsOnly, Category="OnLevelStart")
+	const UEnvQuery* EQS_FindPickupSpawnLocations;
+
+	UPROPERTY(EditDefaultsOnly, Category="OnLevelStart")
+	TMap<TSubclassOf<ASBasicPickup>, int32> PickupsToSpawnMap;
+
 	UFUNCTION()
 	void SpawnBotTimerElapsed();
 	
 	UFUNCTION()
-	void OnQueryCompleted(UEnvQueryInstanceBlueprintWrapper* Instance, EEnvQueryStatus::Type Status);
+	void OnBotSpawnQueryCompleted(UEnvQueryInstanceBlueprintWrapper* Instance, EEnvQueryStatus::Type Status);
+
+	UFUNCTION()
+	void RespawnPlayerElapsed(AController* Controller);
+
+	UFUNCTION()
+	void SpawnItemsAtStart();
+	
+	UFUNCTION()
+	void OnSpawnStartItemsQueryFinished(FEnvQueryResult Result);
+
+	UFUNCTION(Exec)
+	void KillAll();
 };

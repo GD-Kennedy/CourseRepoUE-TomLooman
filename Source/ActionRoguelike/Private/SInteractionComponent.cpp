@@ -2,39 +2,51 @@
 
 
 #include "SInteractionComponent.h"
-#include "SGameplayInterface.h"
-#include "Camera/CameraComponent.h"
 
-// Sets default values for this component's properties
+#include "SCharacter.h"
+#include "SGameplayInterface.h"
+#include "Blueprint/UserWidget.h"
+#include "Camera/CameraComponent.h"
+#include "SWorldUserWidget.h"
+
+static TAutoConsoleVariable<bool> CVarDebugDrawInteraction(
+	TEXT("su.DebugDrawInteraction"),
+	false,
+	TEXT("Toogles drawing debug lines and spheres for interaction componment."),
+	ECVF_Cheat);
+
 USInteractionComponent::USInteractionComponent()
 {
-	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
 
-	// ...
+	CollisionChannel = ECC_WorldDynamic;
+	TraceRadius = 50.0f;
+	TraceDistance = 700.0f;
 }
 
-// Called when the game starts
 void USInteractionComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// ...
+	if (DefaultWidgetInstance == nullptr && ensure(DefaultWidgetClass))
+	{
+		DefaultWidgetInstance = CreateWidget<USWorldUserWidget>(GetWorld(), DefaultWidgetClass);
+	}
 }
 
-
-// Called every frame
 void USInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType,
                                            FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	// ...
+	APawn* MyPawn = Cast<APawn>(GetOwner());
+	if (MyPawn->IsLocallyControlled())
+	{
+		FindBestInteractable();
+	}
 }
 
-
-void USInteractionComponent::PrimaryInteract(UCameraComponent* camera)
+void USInteractionComponent::FindBestInteractable()
 {
 	TArray<FHitResult> Hits;
 	FVector EyeLocation;
@@ -42,36 +54,73 @@ void USInteractionComponent::PrimaryInteract(UCameraComponent* camera)
 
 	AActor* MyOwner = GetOwner();
 	MyOwner->GetActorEyesViewPoint(EyeLocation, EyeRotation);
-	
-	FVector TraceStart = camera->GetComponentLocation();
-	FRotator TraceRotation = camera->GetComponentRotation();
-	FVector TraceEnd = TraceStart + (TraceRotation.Vector() * 500);
+	FVector TraceStart;
+	FRotator TraceRotation;
+	if (ASCharacter* Character = Cast<ASCharacter>(MyOwner))
+	{
+		UCameraComponent* camera = Character->GetCamera();
+		TraceStart = camera->GetComponentLocation();
+		TraceRotation = camera->GetComponentRotation();
+	}
+	else
+	{
+		TraceStart = EyeLocation;
+		TraceRotation = EyeRotation;
+	}
+	FVector TraceEnd = TraceStart + (TraceRotation.Vector() * TraceDistance);
 
 	FCollisionObjectQueryParams ObjectQueryParams;
-	ObjectQueryParams.AddObjectTypesToQuery(ECC_WorldDynamic);
+	ObjectQueryParams.AddObjectTypesToQuery(CollisionChannel);
 	FCollisionShape Shape;
-	float Radius = 50.f;
-	Shape.SetSphere(Radius);
+	Shape.SetSphere(TraceRadius);
 	
 	GetWorld()->SweepMultiByObjectType(Hits, EyeLocation, TraceEnd, FQuat::Identity, ObjectQueryParams, Shape);
-
-	FColor DebugColor = FColor::Red;
+	FocusedActor = nullptr;
+	
 	for (FHitResult Hit : Hits)
 	{
 		if (AActor* HitActor = Hit.GetActor())
 		{
 			if (HitActor->Implements<USGameplayInterface>())
-				if (HitActor->Implements<USGameplayInterface>())
-				{
-					APawn* MyPawn = Cast<APawn>(MyOwner);
-					ISGameplayInterface::Execute_Interact(HitActor, MyPawn);
-
-					DebugColor = FColor::Green;
-					DrawDebugSphere(GetWorld(), Hit.ImpactPoint, Radius, 32, DebugColor, false, 1.0f);
-					break;
-				}
+			{
+				FocusedActor = HitActor;
+				break;
+			}
 		}
 	}
 
-	DrawDebugLine(GetWorld(), EyeLocation, TraceEnd, DebugColor, false, 1.0f, 0, 1.0f);
+	
+	if (DefaultWidgetInstance)
+	{
+		if (FocusedActor)
+		{
+			DefaultWidgetInstance->AttachedActor = FocusedActor;
+
+			if (!DefaultWidgetInstance->IsInViewport())
+			{
+				DefaultWidgetInstance->AddToViewport();
+			}
+		}
+		else
+		{
+			DefaultWidgetInstance->RemoveFromParent();
+		}
+	}
+}
+
+void USInteractionComponent::PrimaryInteract()
+{
+	ServerInteract(FocusedActor);
+}
+
+void USInteractionComponent::ServerInteract_Implementation(AActor* InFocus)
+{
+	if (InFocus == nullptr)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, "No focus Actor to interact");
+		return;
+	}
+	
+	APawn* MyPawn = Cast<APawn>(GetOwner());
+	ISGameplayInterface::Execute_Interact(InFocus, MyPawn);
 }

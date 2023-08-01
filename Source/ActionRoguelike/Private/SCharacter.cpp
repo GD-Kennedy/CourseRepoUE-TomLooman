@@ -3,30 +3,27 @@
 #include "SCharacter.h"
 
 #include "SAttributeComponent.h"
-#include "SBasicProjectile.h"
 #include "SInteractionComponent.h"
+#include "Blueprint/UserWidget.h"
 #include "Camera/CameraComponent.h"
+#include "GameActionSystem/SActionComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "Kismet/GameplayStatics.h"
-#include "Kismet/KismetMathLibrary.h"
 
-// Sets default values
 ASCharacter::ASCharacter()
 {
-	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	
+	SpringArmComp = CreateDefaultSubobject<USpringArmComponent>("SpringArmComp");
+	SpringArmComp->bUsePawnControlRotation = true;
+	SpringArmComp->SetupAttachment(RootComponent);
 
-	SpringArmComponent = CreateDefaultSubobject<USpringArmComponent>("SpringArmComp");
-	SpringArmComponent->bUsePawnControlRotation = true;
-	SpringArmComponent->SetupAttachment(RootComponent);
-
-	CameraComponent = CreateDefaultSubobject<UCameraComponent>("CameraComp");
-	CameraComponent->SetupAttachment(SpringArmComponent);
+	CameraComp = CreateDefaultSubobject<UCameraComponent>("CameraComp");
+	CameraComp->SetupAttachment(SpringArmComp);
 
 	InteractionComp = CreateDefaultSubobject<USInteractionComponent>("InteractionComp");
-
 	AttributeComp = CreateDefaultSubobject<USAttributeComponent>("AttributeComp");
+	ActionComp = CreateDefaultSubobject<USActionComponent>("ActionComp");
 
 	bUseControllerRotationYaw = false;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
@@ -36,6 +33,7 @@ void ASCharacter::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 	AttributeComp->OnHealthChanged.AddDynamic(this, &ASCharacter::OnHealthChange);
+	AttributeComp->OnRageChanged.AddDynamic(this, &ASCharacter::OnRageChange);
 }
 
 // Called to bind functionality to input
@@ -54,13 +52,31 @@ void ASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 	
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ASCharacter::Jump);
 	PlayerInputComponent->BindAction("Dash", IE_Pressed, this, &ASCharacter::Dash);
+	
+	PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &ASCharacter::SprintStart);
+	PlayerInputComponent->BindAction("Sprint", IE_Released, this, &ASCharacter::SprintStop);
 
 	PlayerInputComponent->BindAction("PrimaryInteract", IE_Pressed, this, &ASCharacter::PrimaryInteract);
 }
 
-void ASCharacter::PlayerTeleport(FVector position, FRotator rotation)
+void ASCharacter::PlayerTeleport(FVector Position, FRotator Rotation)
 {
-	TeleportTo(position, rotation);
+	TeleportTo(Position, Rotation);
+}
+
+void ASCharacter::HealSelf(float Amount)
+{
+	AttributeComp->ApplyHealthChange(this, Amount);
+}
+
+FVector ASCharacter::GetPawnViewLocation() const
+{
+	return CameraComp->GetComponentLocation();
+}
+
+FRotator ASCharacter::GetPawnViewRotation() const
+{
+	return CameraComp->GetComponentRotation();
 }
 
 void ASCharacter::MoveForward(float Value)
@@ -78,10 +94,6 @@ void ASCharacter::MoveRight(float Value)
 	ControlRot.Pitch = 0.0f;
 	ControlRot.Roll = 0.0f;
 
-	// X forward (red)
-	// Y right (green)
-	// Z up (blue)
-
 	FVector RightVector = FRotationMatrix(ControlRot).GetScaledAxis(EAxis::Y);
 
 	AddMovementInput(RightVector, Value);
@@ -89,92 +101,58 @@ void ASCharacter::MoveRight(float Value)
 
 void ASCharacter::PrimaryAttack()
 {
-	PlayAnimMontage(AttackAnim);
-	StartProjectileAction(ProjectileClass, 0.15f);
+	ActionComp->StartActionByName(this, "PrimaryAttack");
 }
 
 void ASCharacter::SpecialAttack()
 {
-	PlayAnimMontage(AttackAnim);
-	StartProjectileAction(ProjectileBPClass, 0.15f);
+	ActionComp->StartActionByName(this, "SpecialAttack");
 }
 
 void ASCharacter::Dash()
 {
-	PlayAnimMontage(AttackAnim, 2);
-	StartProjectileAction(DashClass, 0.1f);
+	ActionComp->StartActionByName(this, "Dash");
 }
 
-void ASCharacter::StartProjectileAction(TSubclassOf<AActor> projectile, float delay)
+void ASCharacter::SprintStart()
 {
-	if (CastingVFX)
-	{
-		UGameplayStatics::SpawnEmitterAttached(CastingVFX, GetMesh(), HandSocketName,
-			FVector::Zero(), FRotator::ZeroRotator,
-			EAttachLocation::SnapToTarget);	
-	}
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle_PrimaryAttack,
-		[&, projectile] { SpawnProjectile(projectile); },
-		delay,
-		false);
+	ActionComp->StartActionByName(this, "Sprint");
 }
 
-void ASCharacter::SpawnProjectile(TSubclassOf<AActor> projectileType)
+void ASCharacter::SprintStop()
 {
-	if (ensure(projectileType))
-	{
-		FVector TraceStart = CameraComponent->GetComponentLocation();
-		FRotator TraceRotation = CameraComponent->GetComponentRotation();
-		FVector TraceEnd = TraceStart + (TraceRotation.Vector() * 25000);
-
-		FCollisionObjectQueryParams ObjParams;
-		ObjParams.AddObjectTypesToQuery(ECC_WorldStatic);
-		ObjParams.AddObjectTypesToQuery(ECC_WorldDynamic);
-		ObjParams.AddObjectTypesToQuery(ECC_Pawn);
-
-		FCollisionShape Shape;
-		Shape.SetSphere(5);
-
-		FCollisionQueryParams Params;
-		Params.AddIgnoredActor(this);
-
-		FHitResult Hit;
-		if (GetWorld()->SweepSingleByObjectType(Hit, TraceStart, TraceEnd, FQuat::Identity, ObjParams, Shape, Params))
-		{
-			TraceEnd = Hit.ImpactPoint;
-		}
-		
-		FVector HandLocation = GetMesh()->GetSocketLocation(HandSocketName);
-
-		DrawDebugLine(GetWorld(), HandLocation, TraceEnd, FColor::Emerald, false, 1, 0, 2);
-
-		FRotator ShootRotation = FRotationMatrix::MakeFromX(TraceEnd - HandLocation).Rotator();
-
-		FTransform SpawnTM = FTransform(ShootRotation, HandLocation);
-		FActorSpawnParameters SpawnParams;
-		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-		SpawnParams.Instigator = this;
-		GetWorld()->SpawnActor<AActor>(projectileType, SpawnTM, SpawnParams);
-	}
+	ActionComp->StopActionByName(this, "Sprint");
 }
 
 void ASCharacter::PrimaryInteract()
 {
 	if (InteractionComp)
 	{
-		InteractionComp->PrimaryInteract(CameraComponent);
+		InteractionComp->PrimaryInteract();
 	}
 }
 
+UCameraComponent* ASCharacter::GetCamera() const
+{
+	return CameraComp;
+}
+
+USActionComponent* ASCharacter::GetActionComponent() const
+{
+	return ActionComp;
+}
+
 void ASCharacter::OnHealthChange(AActor* InstigatorActor, USAttributeComponent* OwningComp, float NewHealth,
-	float Delta)
+                                 float Delta)
 {
 	if (NewHealth <= 0.0f)
 	{
 		if(Delta != 0.0f)
 		{
-			APlayerController* PC = Cast<APlayerController>(GetController());
+			APlayerController* PC = Cast<APlayerController>(GetController());			
+			
 			DisableInput(PC);
+			SetLifeSpan(5.0f);
 		}
 	}
 	else if (Delta < 0)
@@ -183,4 +161,10 @@ void ASCharacter::OnHealthChange(AActor* InstigatorActor, USAttributeComponent* 
 		GetMesh()->SetScalarParameterValueOnMaterials(HitFlashSpeedParam, HitFlashSpeedValue);
 		GetMesh()->SetVectorParameterValueOnMaterials(HitFlashColorParam, HitFlashColorValue);
 	}
+}
+
+void ASCharacter::OnRageChange(AActor* InstigatorActor, USAttributeComponent* OwningComp,
+	float NewHealth, float Delta)
+{
+	// Some logic if needed? Sound, nice aura or something 
 }

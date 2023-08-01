@@ -8,14 +8,29 @@ void ASHealthPotion::Interact_Implementation(APawn* InstigatorPawn)
 {
 	if (ASCharacter* Character = Cast<ASCharacter>(InstigatorPawn))
 	{
-		if (USAttributeComponent* attributeComp = USAttributeComponent::GetAttributes(Character))
+		if (USAttributeComponent* AttributeComp = USAttributeComponent::GetAttributes(Character))
 		{
-			if (attributeComp->IsMaxHealth())
+			if (AttributeComp->IsMaxHealth())
 			{
 				return;
 			}
+			
+			ASPlayerState* PlayerState = Cast<ASPlayerState>(Character->GetPlayerState());
+			const int32 CreditsBefore = PlayerState->GetPlayerCredits();
+			if (!PlayerState->RemoveCredits(PickupCost))
+			{
+				UE_LOG(LogTemp, Log,
+					   TEXT("Pickup attempt failed: HAD %i, COST %i, NOW %i"),
+					   CreditsBefore, PickupCost, PlayerState->GetPlayerCredits());
+				return;
+			}
+	
+			UE_LOG(LogTemp, Log,
+				   TEXT("Pickup attempt success: HAD %i, COST %i, NOW %i"),
+				   CreditsBefore, PickupCost, PlayerState->GetPlayerCredits());
+			
 			Super::Interact_Implementation(InstigatorPawn);
-			attributeComp->ApplyHealthChange(this, 50.0f);
+			AttributeComp->ApplyHealthChange(this, 50.0f);
 		}
 	}
 }

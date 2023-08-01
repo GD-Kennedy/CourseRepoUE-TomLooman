@@ -3,7 +3,6 @@
 
 #include "SBasicProjectile.h"
 
-#include "SCharacter.h"
 #include "Components/AudioComponent.h"
 #include "Components/SphereComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
@@ -29,11 +28,13 @@ ASBasicProjectile::ASBasicProjectile()
 	AudioComp = CreateDefaultSubobject<UAudioComponent>("AudioComp");
 	AudioComp->SetupAttachment(SphereComp);
 	
-	MovementComp = CreateDefaultSubobject<UProjectileMovementComponent>("ProjectileMovementCmomp");
-	MovementComp->InitialSpeed = 8000.0f;
-	MovementComp->bRotationFollowsVelocity = true;
-	MovementComp->bInitialVelocityInLocalSpace = true;
-	MovementComp->ProjectileGravityScale = 0;
+	MoveComp = CreateDefaultSubobject<UProjectileMovementComponent>("ProjMoveComp");
+	MoveComp->bRotationFollowsVelocity = true;
+	MoveComp->bInitialVelocityInLocalSpace = true;
+	MoveComp->ProjectileGravityScale = 0.0f;
+	MoveComp->InitialSpeed = 8000;
+
+	SetReplicates(true);
 }
 
 void ASBasicProjectile::Explode_Implementation()
@@ -53,7 +54,6 @@ void ASBasicProjectile::Explode_Implementation()
 		}
 		
 		Destroy();
-
 	}
 }
 
