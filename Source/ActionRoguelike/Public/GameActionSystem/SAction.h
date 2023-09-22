@@ -55,6 +55,9 @@ public:
 	virtual UWorld* GetWorld() const override;
 
 protected:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="UI")
+	UTexture2D* Icon;
+	
 	UPROPERTY(Replicated);
 	USActionComponent* ActionComp;
 	
@@ -72,6 +75,9 @@ protected:
 
 	UFUNCTION(BlueprintCallable, Category="Action")
 	USActionComponent* GetOwningComponent() const;
+
+	UPROPERTY(Replicated)
+	float TimeStarted;
 
 public:
 	virtual bool IsSupportedForNetworking() const override

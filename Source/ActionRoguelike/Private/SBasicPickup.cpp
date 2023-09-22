@@ -1,7 +1,7 @@
 #include "SBasicPickup.h"
 
-#include "SAttributeComponent.h"
 #include "SCharacter.h"
+#include "Net/UnrealNetwork.h"
 
 ASBasicPickup::ASBasicPickup()
 {
@@ -19,11 +19,33 @@ void ASBasicPickup::Interact_Implementation(APawn* InstigatorPawn)
 		return;
 	}
 
-	RootComponent->SetVisibility(false);
-	SetActorEnableCollision(false);
+	TogglePowerUp(false);
 	GetWorld()->GetTimerManager().SetTimer(TimerHandle_Cooldown,
 		[=] {
-		RootComponent->SetVisibility(true);
-		SetActorEnableCollision(true);
+			TogglePowerUp(true);
 	}, 10.0f, false);
+}
+
+FText ASBasicPickup::GetInteractText_Implementation(APawn* InstigatorPawn)
+{
+	return FText::GetEmpty();
+}
+
+void ASBasicPickup::TogglePowerUp(bool bNewIsActive)
+{
+	bIsActive = bNewIsActive;
+	OnRep_IsActive();
+}
+
+void ASBasicPickup::OnRep_IsActive()
+{
+	RootComponent->SetVisibility(bIsActive, true);
+	SetActorEnableCollision(bIsActive);
+}
+
+void ASBasicPickup::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ASBasicPickup, bIsActive);
 }

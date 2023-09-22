@@ -56,14 +56,17 @@ protected:
 	UPROPERTY()
 	USWorldUserWidget* ActiveHealthBar;
 	
-	UPROPERTY()
+	UPROPERTY(Replicated)
 	USWorldUserWidget* EnemyDetectedMark;
-
+	
 	virtual void PostInitializeComponents() override;
 
 	void SetTargetActor(AActor* NewTarget);
 	
 	void ShowEnemyDetectedWidget();
+	
+	UFUNCTION(NetMulticast, Unreliable)
+	void MulticastShowDetectedMark();
 
 	UFUNCTION()
 	void OnHealthChange(AActor* InstigatorActor, USAttributeComponent* OwningComp, float NewHealth, float Delta);
@@ -75,4 +78,7 @@ protected:
 	void FlashDamageOnHit();
 	UFUNCTION()
 	void OnPawnSeen(APawn* Pawn);
+
+public:
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&) const override;
 };

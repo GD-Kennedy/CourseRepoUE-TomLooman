@@ -57,7 +57,7 @@ void ASBasicProjectile::Explode_Implementation()
 	}
 }
 
-void ASBasicProjectile::OnActorHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
+void ASBasicProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
                                    UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
 	Explode_Implementation();
@@ -66,14 +66,13 @@ void ASBasicProjectile::OnActorHit(UPrimitiveComponent* HitComponent, AActor* Ot
 void ASBasicProjectile::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 void ASBasicProjectile::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 	SphereComp->IgnoreActorWhenMoving(GetInstigator(), true);
-	SphereComp->OnComponentHit.AddDynamic(this, &ASBasicProjectile::OnActorHit);
+	SphereComp->OnComponentHit.AddDynamic(this, &ASBasicProjectile::OnHit);
 	
 	AudioComp->SetSound(FlightSound);
 	AudioComp->Play();

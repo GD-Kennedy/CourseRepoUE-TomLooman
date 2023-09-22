@@ -18,11 +18,14 @@ public:
 
 	virtual void Interact_Implementation(APawn* InstigatorPawn) override;
 
+	virtual void OnActorLoaded_Implementation() override;
+
 	UPROPERTY(VisibleAnywhere)
 	float TargetPitch;
+	
 
 protected:
-	UPROPERTY(ReplicatedUsing="OnRep_LidOpened", Replicated) // RepNotify
+	UPROPERTY(ReplicatedUsing="OnRep_LidOpened", Replicated, SaveGame) // RepNotify
 	bool bLidOpen;
 
 	UFUNCTION()

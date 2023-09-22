@@ -27,6 +27,11 @@ ASAICharacter::ASAICharacter()
 	ActionComp = CreateDefaultSubobject<USActionComponent>("ActionComp");
 }
 
+void ASAICharacter::MulticastShowDetectedMark_Implementation()
+{
+	ShowEnemyDetectedWidget();
+}
+
 void ASAICharacter::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
@@ -110,6 +115,11 @@ void ASAICharacter::OnPawnSeen(APawn* Pawn)
 	SetTargetActor(Pawn);
 }
 
+void ASAICharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& LifetimeProperties) const
+{
+	Super::GetLifetimeReplicatedProps(LifetimeProperties);
+}
+
 void ASAICharacter::SetTargetActor(AActor* NewTarget)
 {
 	AAIController* controller = Cast<AAIController>(GetController());
@@ -117,7 +127,10 @@ void ASAICharacter::SetTargetActor(AActor* NewTarget)
 	{
 		if (controller->GetBlackboardComponent()->GetValueAsObject("TargetActor") != NewTarget)
 		{
-			ShowEnemyDetectedWidget();
+			if (Owner->HasAuthority())
+			{
+				MulticastShowDetectedMark();
+			}
 		}
 		controller->GetBlackboardComponent()->SetValueAsObject("TargetActor", NewTarget);
 	}

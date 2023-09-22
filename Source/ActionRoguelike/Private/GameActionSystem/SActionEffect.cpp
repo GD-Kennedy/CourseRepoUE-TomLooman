@@ -3,6 +3,7 @@
 
 #include "GameActionSystem/SActionEffect.h"
 #include "GameActionSystem/SActionComponent.h"
+#include "GameFramework/GameStateBase.h"
 
 USActionEffect::USActionEffect()
 {
@@ -39,11 +40,22 @@ void USActionEffect::StopAction_Implementation(AActor* Instigator)
 
 	GetWorld()->GetTimerManager().ClearTimer(PeriodHandle);
 	GetWorld()->GetTimerManager().ClearTimer(DurationHandle);
-	USActionComponent* Comp = GetOwningComponent();
-	if (Comp)
+	// TODO: sprawdzic to bo cos nie usuwa
+	if (USActionComponent* Comp = GetOwningComponent())
 	{
 		Comp->RemoveAction(this);
 	}
+}
+
+float USActionEffect::GetTimeRemaining() const
+{
+	if (AGameStateBase* GS = GetWorld()->GetGameState<AGameStateBase>())
+	{
+		float EndTime = TimeStarted + Duration;
+		return EndTime - GS->GetServerWorldTimeSeconds();
+	}
+
+	return Duration;
 }
 
 

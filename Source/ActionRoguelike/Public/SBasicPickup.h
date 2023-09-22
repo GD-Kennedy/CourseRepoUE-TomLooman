@@ -21,6 +21,18 @@ public:
 	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* MeshComp;
 
+	virtual FText GetInteractText_Implementation(APawn* InstigatorPawn) override;
+
+protected:
+	UPROPERTY(ReplicatedUsing="OnRep_IsActive")
+	bool bIsActive;
+	
+	UFUNCTION()
+	void TogglePowerUp(bool bNewIsActive);
+	
+	UFUNCTION()
+	void OnRep_IsActive();
+
 protected:
 	UPROPERTY(EditDefaultsOnly)
 	int32 PickupCost;

@@ -17,10 +17,18 @@ void USAction::StartAction_Implementation(AActor* Instigator)
 	UE_LOG(LogTemp, Log, TEXT("Running: %s"), *GetNameSafe(this))
 	// LogOnScreen(this, FString::Printf(TEXT("Started: %s"), *ActionName.ToString()), FColor::Green);
 
-	GetOwningComponent()->ActiveGameplayTags.AppendTags(GrantsTags);
+	USActionComponent* ActionComponent = GetOwningComponent();
+	ActionComponent->ActiveGameplayTags.AppendTags(GrantsTags);
 	
 	RepData.bIsRunning = true;
 	RepData.Instigator = Instigator;
+
+	if (GetOwningComponent()->GetOwnerRole() == ROLE_Authority)
+	{
+		TimeStarted = GetWorld()->TimeSeconds;
+	}
+	
+	ActionComponent->OnActionStarted.Broadcast(ActionComponent, this);
 }
 
 void USAction::StopAction_Implementation(AActor* Instigator)
@@ -28,9 +36,13 @@ void USAction::StopAction_Implementation(AActor* Instigator)
 	UE_LOG(LogTemp, Log, TEXT("Stopping: %s"), *GetNameSafe(this))
 	// LogOnScreen(this, FString::Printf(TEXT("Stopped: %s"), *ActionName.ToString()), FColor::White);
 	
-	GetOwningComponent()->ActiveGameplayTags.RemoveTags(GrantsTags);
+	USActionComponent* ActionComponent = GetOwningComponent();
+	ActionComponent->ActiveGameplayTags.RemoveTags(GrantsTags);
+	
 	RepData.bIsRunning = false;
 	RepData.Instigator = Instigator;
+	
+	ActionComponent->OnActionStopped.Broadcast(ActionComponent, this);
 }
 
 bool USAction::CanStart_Implementation(AActor* Instigator)
@@ -81,4 +93,5 @@ void USAction::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetime
 	
 	DOREPLIFETIME(USAction, RepData);
 	DOREPLIFETIME(USAction, ActionComp);
+	DOREPLIFETIME(USAction, TimeStarted);
 }

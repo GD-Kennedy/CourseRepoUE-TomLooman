@@ -24,7 +24,7 @@ void ASDashProjectile::BeginPlay()
 	GetWorldTimerManager().SetTimer(TimerHandle_DashDelay, this, &ASDashProjectile::TriggerDelayedTeleport, 0.3f);
 }
 
-void ASDashProjectile::OnActorHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
+void ASDashProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
                                   UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
 	TriggerDelayedTeleport();

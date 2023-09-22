@@ -21,8 +21,7 @@ protected:
 	float LifeSpan;
 	FTimerHandle TimerHandle_DashDelay;
 	
-	UFUNCTION()
-	virtual void OnActorHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
+	virtual void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
 	                        UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit) override;
 	virtual void PostInitializeComponents() override;
 

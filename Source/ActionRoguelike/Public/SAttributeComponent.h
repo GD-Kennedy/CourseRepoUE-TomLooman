@@ -37,10 +37,10 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes")
 	bool HasRage;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Replicated, Category = "Attributes")
 	float Rage;
 	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Replicated, Category = "Attributes")
 	float MaxRage;
 
 public:
@@ -66,10 +66,13 @@ public:
 	bool ApplyHealthChange(AActor* InstigatorActor, float Delta);
 
 	UFUNCTION(BlueprintCallable)
-	void ApplyRageChange(AActor* InstigatorActor, float Delta);
+	bool ApplyRageChange(AActor* InstigatorActor, float Delta);
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	UFUNCTION(NetMulticast, Reliable) // TODO: Mark as Unreliable once we moved the 'state' to our character
 	void MulticastHealthChanged(AActor* Instigator, float NewHealth, float Delta);
+	
+	UFUNCTION(NetMulticast, Reliable) // TODO: Mark as Unreliable once we moved the 'state' to our character
+	void MulticastRageChanged(AActor* Instigator, float NewRage, float Delta);
 };

@@ -51,9 +51,9 @@ protected:
 		
 	UPROPERTY(EditAnywhere, Category = "Components")
 	TSubclassOf<UCameraShakeBase> CameraShakeComponent;
-	
+
 	UFUNCTION()
-	virtual void OnActorHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+	virtual void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void Explode();
