@@ -66,5 +66,7 @@ public:
 	
 	virtual bool ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch,
 		FReplicationFlags* RepFlags) override;
+	
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 };
 

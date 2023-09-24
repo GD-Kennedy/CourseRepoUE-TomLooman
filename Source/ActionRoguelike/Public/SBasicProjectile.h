@@ -58,5 +58,6 @@ protected:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void Explode();
 	virtual void BeginPlay() override;
+	
 	virtual void PostInitializeComponents() override;
 };

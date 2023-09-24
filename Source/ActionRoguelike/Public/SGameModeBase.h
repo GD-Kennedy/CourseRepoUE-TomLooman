@@ -4,11 +4,43 @@
 
 #include "CoreMinimal.h"
 #include "SBasicPickup.h"
+#include "SMonsterData.h"
+#include "Engine/DataTable.h"
 #include "EnvironmentQuery/EnvQueryInstanceBlueprintWrapper.h"
 #include "GameFramework/GameModeBase.h"
 #include "SGameModeBase.generated.h"
 
+class UDataTable;
 class USSaveGame;
+
+USTRUCT(BlueprintType)
+struct FMonsterInfoRow : public FTableRowBase
+{
+	GENERATED_BODY()
+
+public:
+	FMonsterInfoRow()
+	{
+		Weight = 1.0f;
+		SpawnCost = 5.0f;
+		KillReward = 20.0f;
+	}
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FPrimaryAssetId MonsterId;
+	// SMonsterData* MonsterData; // Hard ref data call
+	// TSubclassOf<AActor> MonsterClass; // Direct class call
+
+	// Following 3 below dont do anything - just example 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	float Weight;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	float SpawnCost;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	float KillReward;
+};
 
 /**
  * 
@@ -35,6 +67,9 @@ protected:
 	
 	UPROPERTY()
 	USSaveGame* CurrentSaveGame;
+
+	UPROPERTY(EditDefaultsOnly, Category="AI")
+	UDataTable* MonsterTable;
 	
 	FTimerHandle TimerHandle_SpawnBots;
 
@@ -46,9 +81,10 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category="AI")
 	UCurveFloat* DifficultyCurve;
-	
-	UPROPERTY(EditDefaultsOnly, Category="AI")
-	UClass* MinionClass;
+
+	// Using table now
+	// UPROPERTY(EditDefaultsOnly, Category="AI")
+	// UClass* MinionClass;
 
 	UPROPERTY(EditDefaultsOnly, Category="AI")
 	float RespawnDelay;
@@ -61,6 +97,8 @@ protected:
 
 	UFUNCTION()
 	void SpawnBotTimerElapsed();
+
+	void OnMonsterLoaded(FPrimaryAssetId LoadedId, FVector SpawnLocation);
 	
 	UFUNCTION()
 	void OnBotSpawnQueryCompleted(UEnvQueryInstanceBlueprintWrapper* Instance, EEnvQueryStatus::Type Status);

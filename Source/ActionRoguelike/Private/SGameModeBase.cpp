@@ -6,7 +6,9 @@
 #include "SAttributeComponent.h"
 #include "SCharacter.h"
 #include "SSaveGame.h"
+#include "ActionRoguelike/ActionRoguelike.h"
 #include "AI/SAICharacter.h"
+#include "Engine/AssetManager.h"
 #include "EnvironmentQuery/EnvQueryManager.h"
 #include "GameFramework/GameStateBase.h"
 #include "Kismet/GameplayStatics.h"
@@ -21,15 +23,18 @@ static TAutoConsoleVariable<bool> CVarSpawnBots(
 void ASGameModeBase::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
 {
 	Super::InitGame(MapName, Options, ErrorMessage);
-
+	FString SelectedSaveSlot = UGameplayStatics::ParseOption(Options, "SaveGame");
+	if (SelectedSaveSlot.Len() > 0)
+	{
+		SlotName = SelectedSaveSlot;
+	}
+	
 	LoadSaveGame();
 }
 
 void ASGameModeBase::HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer)
 {
 	Super::HandleStartingNewPlayer_Implementation(NewPlayer);
-
-	
 	
 	if (ASPlayerState* PlayerState = Cast<ASPlayerState>(NewPlayer->PlayerState))
 	{
@@ -116,9 +121,55 @@ void ASGameModeBase::OnBotSpawnQueryCompleted(UEnvQueryInstanceBlueprintWrapper*
 	TArray<FVector> Locations = Instance->GetResultsAsLocations();
 	if (Locations.Num() > 0)
 	{
-		GetWorld()->SpawnActor<AActor>(MinionClass, Locations[0], FRotator::ZeroRotator);
-		UE_LOG(LogTemp, Warning, TEXT("Bot spawned."))
+		if (MonsterTable)
+		{
+			TArray<FMonsterInfoRow*> Rows;
+			MonsterTable->GetAllRows("", Rows);
+
+			int32 RandomIndex = FMath::RandRange(0, Rows.Num() - 1);
+			FMonsterInfoRow* SelectedRow = Rows[RandomIndex];
+
+			if (UAssetManager* Manager = UAssetManager::GetIfValid())
+			{
+				TArray<FName> Bundles;
+				FStreamableDelegate Delegate = FStreamableDelegate::CreateUObject(this,
+					&ASGameModeBase::OnMonsterLoaded, SelectedRow->MonsterId, Locations[0]);
+
+				LogOnScreen(this, "Loading monster...");
+				Manager->LoadPrimaryAsset(SelectedRow->MonsterId, Bundles, Delegate);
+			}
+		}
 	}
+}
+
+void ASGameModeBase::OnMonsterLoaded(FPrimaryAssetId LoadedId, FVector SpawnLocation)
+{
+	UAssetManager* Manager = UAssetManager::GetIfValid();
+	if (Manager)
+	{
+		USMonsterData* MonsterData = Cast<USMonsterData>(Manager->GetPrimaryAssetObject(LoadedId));
+		if (!MonsterData)
+		{
+			return;
+		}
+
+		if (AActor* NewBot = GetWorld()->SpawnActor<AActor>(MonsterData->MonsterClass, SpawnLocation, FRotator::ZeroRotator))
+		{
+			LogOnScreen(this, FString::Printf(TEXT("Spawned bot %s (%s)"), *GetNameSafe(NewBot), *GetNameSafe(MonsterData)));
+
+			if (USActionComponent* ActionComponent = Cast<USActionComponent>(NewBot->GetComponentByClass(USActionComponent::StaticClass())))
+			{
+				for (TSubclassOf<USAction> ActionClass : MonsterData->Actions)
+				{
+					ActionComponent->AddAction(GetOwner(), ActionClass);
+				}	
+			}
+
+			LogOnScreen(this, "Monster loaded...");
+			return;
+		}
+	}
+	LogOnScreen(this, "Monster loading failed...");
 }
 
 void ASGameModeBase::KillAll()

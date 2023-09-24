@@ -8,7 +8,7 @@ ASBasicPickup::ASBasicPickup()
 	MeshComp = CreateDefaultSubobject<UStaticMeshComponent>("Mesh");
 	RootComponent = MeshComp;
 
-	SetReplicates(true);
+	bReplicates = true;
 }
 
 void ASBasicPickup::Interact_Implementation(APawn* InstigatorPawn)
