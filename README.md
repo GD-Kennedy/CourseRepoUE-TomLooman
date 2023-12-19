@@ -1,4 +1,4 @@
-# Looman's Professional Game Development
+# Repo for Looman's Professional Game Development
 
 Repo after finishing the Tom Looman's Professional Game Development in C++ and Unreal Engine
 
